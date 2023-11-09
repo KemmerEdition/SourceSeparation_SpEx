@@ -1,14 +1,15 @@
 import json
 import logging
 import os
+import glob
+from glob import glob
 import shutil
 from pathlib import Path
 
-import torchaudio
+import numpy as np
 from speechbrain.utils.data_utils import download_file
-from tqdm import tqdm
-
 from hw_asr.base.base_dataset import BaseDataset
+from hw_asr.mixer.mixer import MixtureGenerator, speakers_list
 from hw_asr.utils import ROOT_PATH
 
 logger = logging.getLogger(__name__)
@@ -25,18 +26,18 @@ URL_LINKS = {
 
 
 class LibrispeechDataset(BaseDataset):
-    def __init__(self, part, data_dir=None, *args, **kwargs):
+    def __init__(self, part, data_dir=None, mix=None, *args, **kwargs):
         assert part in URL_LINKS or part == 'train_all'
 
         if data_dir is None:
             data_dir = ROOT_PATH / "data" / "datasets" / "librispeech"
             data_dir.mkdir(exist_ok=True, parents=True)
-        self._data_dir = data_dir
-        if part == 'train_all':
-            index = sum([self._get_or_load_index(part)
-                         for part in URL_LINKS if 'train' in part], [])
-        else:
-            index = self._get_or_load_index(part)
+        self._data_dir = Path(data_dir)
+        # if part == 'train_all':
+        #     index = sum([self._get_or_load_index(part)
+        #                  for part in URL_LINKS if 'train' in part], [])
+        # else:
+        index = self._get_or_load_index(part, mix)
 
         super().__init__(index, *args, **kwargs)
 
@@ -50,44 +51,90 @@ class LibrispeechDataset(BaseDataset):
         os.remove(str(arch_path))
         shutil.rmtree(str(self._data_dir / "LibriSpeech"))
 
-    def _get_or_load_index(self, part):
-        index_path = self._data_dir / f"{part}_index.json"
+    def _get_or_load_index(self, part, mix):
+        index_path = mix.get("index_path", self._data_dir / f"{part}_index.json")
+        index_path = Path(index_path)
         if index_path.exists():
             with index_path.open() as f:
                 index = json.load(f)
         else:
-            index = self._create_index(part)
+            index = self._create_index(part, mix)
             with index_path.open("w") as f:
                 json.dump(index, f, indent=2)
         return index
 
-    def _create_index(self, part):
+    def _create_index(self, part, mix):
         index = []
+
         split_dir = self._data_dir / part
         if not split_dir.exists():
             self._load_part(part)
 
-        flac_dirs = set()
-        for dirpath, dirnames, filenames in os.walk(str(split_dir)):
-            if any([f.endswith(".flac") for f in filenames]):
-                flac_dirs.add(dirpath)
-        for flac_dir in tqdm(
-                list(flac_dirs), desc=f"Preparing librispeech folders: {part}"
-        ):
-            flac_dir = Path(flac_dir)
-            trans_path = list(flac_dir.glob("*.trans.txt"))[0]
-            with trans_path.open() as f:
-                for line in f:
-                    f_id = line.split()[0]
-                    f_text = " ".join(line.split()[1:]).strip()
-                    flac_path = flac_dir / f"{f_id}.flac"
-                    t_info = torchaudio.info(str(flac_path))
-                    length = t_info.num_frames / t_info.sample_rate
-                    index.append(
-                        {
-                            "path": str(flac_path.absolute().resolve()),
-                            "text": f_text.lower(),
-                            "audio_len": length,
-                        }
-                    )
+        out_folder = mix.get("out_folder", self._data_dir / f"{part}-mixed")
+        out_folder = Path(out_folder)
+        if not out_folder.exists():
+            self.mix_trainer(split_dir, out_folder, mix)
+
+        ref_train = sorted(glob(os.path.join(out_folder, '*-ref.wav')))
+        mix_train = sorted(glob(os.path.join(out_folder, '*-mixed.wav')))
+        target_train = sorted(glob(os.path.join(out_folder, '*-target.wav')))
+        ref_train, mix_train, target_train = np.asarray(ref_train, dtype=object), \
+            np.asarray(mix_train, dtype=object), \
+            np.asarray(target_train, dtype=object)
+        id_sp = []
+        for r in ref_train:
+            id_sp.append(int(r.split('/')[-1].split('_')[0]))
+        id_sp = np.asarray(id_sp)
+        num_sp = np.asarray(id_sp).argsort()
+        ref_train, mix_train, target_train, id_sp = ref_train[num_sp], mix_train[num_sp], target_train[num_sp], id_sp[num_sp]
+        ids = list(range(len(id_sp)))
+
+        for r, m, t, id_ in zip(ref_train, mix_train, target_train, ids):
+            index.append(
+                {
+                    "reference": r,
+                    "mix": m,
+                    "target": t,
+                    "speaker_id": id_
+                }
+            )
         return index
+
+    def mix_trainer(self, split_dir, out_folder, mix):
+        if mix is None:
+            mix = {}
+        test = mix.get("test", False)
+        mixer_train = MixtureGenerator(
+            speakers_files=speakers_list(split_dir, audioTemplate="*.flac"),
+            out_folder=out_folder,
+            nfiles=mix.get("nfiles", 10000),
+            test=mix.get("test", False),
+            randomState=42
+        )
+
+        # mixer_test = MixtureGenerator(
+        #     speakers_files=speakers_list(audios_dir, audioTemplate="*.flac"),
+        #     out_folder=out_folder,
+        #     nfiles=mix.get("nfiles", 5000),
+        #     test=mix.get("test", True),
+        #     randomState=42
+        # )
+
+        if not test:
+            mixer_train.generate_mixes(
+                snr_levels=mix.get("snr_levels", [-5, 5]),
+                num_workers=mix.get("num_workers", 2),
+                update_steps=mix.get("update_steps", 100),
+                trim_db=mix.get("trim_db", 20),
+                vad_db=mix.get("vad_db", 20),
+                audioLen=mix.get("audioLen", 3)
+            )
+        else:
+            mixer_train.generate_mixes(
+                snr_levels=mix.get("snr_levels", [0]),
+                num_workers=mix.get("num_workers", 2),
+                update_steps=mix.get("update_steps", 100),
+                trim_db=mix.get("trim_db", None),
+                vad_db=mix.get("vad_db", 20),
+                audioLen=mix.get("audioLen", 3)
+            )

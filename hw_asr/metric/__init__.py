@@ -1,7 +1,5 @@
-from hw_asr.metric.cer_metric import ArgmaxCERMetric
-from hw_asr.metric.wer_metric import ArgmaxWERMetric
+from hw_asr.metric.sisdr import SiSdr
+from hw_asr.metric.pesq import PesQ
+from hw_asr.metric.accuracy import Accuracy
 
-__all__ = [
-    "ArgmaxWERMetric",
-    "ArgmaxCERMetric"
-]
+__all__ = ["SiSdr", "PesQ", "Accuracy"]

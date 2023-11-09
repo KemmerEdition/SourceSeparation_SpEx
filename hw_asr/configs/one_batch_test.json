@@ -15,65 +15,76 @@
     "spectrogram": []
   },
   "arch": {
-    "type": "BaselineModel",
+    "type": "SpexPlus",
     "args": {
-      "n_feats": 128,
-      "fc_hidden": 512
     }
   },
   "data": {
     "train": {
-      "batch_size": 10,
-      "num_workers": 0,
+      "batch_size": 3,
+      "num_workers": 5,
       "datasets": [
         {
           "type": "LibrispeechDataset",
           "args": {
-            "part": "dev-clean",
-            "max_audio_length": 20.0,
-            "max_text_length": 200,
-            "limit": 10
+            "part": "train-clean-100",
+
+            "mix": {
+              "index_path": "data/datasets/librispeech/train-clean-100_index.json",
+              "out_folder": "data/datasets/librispeech/train-clean-100-mixed"
+            }
+
           }
         }
       ]
     },
     "val": {
-      "batch_size": 10,
-      "num_workers": 0,
+      "batch_size": 3,
+      "num_workers": 5,
       "datasets": [
         {
           "type": "LibrispeechDataset",
           "args": {
-            "part": "dev-clean",
-            "max_audio_length": 20.0,
-            "max_text_length": 200,
-            "limit": 10
+            "part": "test-clean",
+             "mix": {
+               "index_path": "data/datasets/librispeech/test-clean_index.json",
+               "out_folder": "data/datasets/librispeech/test-clean-mixed"
+            }
           }
         }
       ]
     }
   },
   "optimizer": {
-    "type": "SGD",
+    "type": "AdamW",
     "args": {
-      "lr": 1e-2
+      "lr": 3e-4,
+      "weight_decay": 1e-5
     }
   },
   "loss": {
-    "type": "CTCLoss",
+    "type": "SpexLoss",
     "args": {}
   },
   "metrics": [
     {
-      "type": "ArgmaxWERMetric",
+      "type": "SiSdr",
       "args": {
-        "name": "WER (argmax)"
+        "name": "SiSdrMetric"
       }
     },
     {
-      "type": "ArgmaxCERMetric",
+      "type": "PesQ",
       "args": {
-        "name": "CER (argmax)"
+        "name": "PesQMetric",
+        "sample_rate": 16000,
+        "mode": "wb"
+      }
+    },
+     {
+      "type": "Accuracy",
+      "args": {
+        "name": "AccuracyMetric"
       }
     }
   ],
@@ -81,22 +92,23 @@
     "type": "OneCycleLR",
     "args": {
       "steps_per_epoch": 100,
-      "epochs": 50,
+      "epochs": 30,
       "anneal_strategy": "cos",
       "max_lr": 1e-2,
       "pct_start": 0.2
     }
   },
   "trainer": {
-    "epochs": 50,
+    "epochs": 30,
     "save_dir": "saved/",
     "save_period": 5,
     "verbosity": 2,
     "monitor": "min val_loss",
     "early_stop": 100,
     "visualize": "wandb",
-    "wandb_project": "asr_project",
-    "len_epoch": 100,
-    "grad_norm_clip": 10
+    "wandb_project": "spex_project",
+    "wandb_run_name": "test_run_on_one_batch",
+    "len_epoch": 1,
+    "grad_norm_clip": 100
   }
 }

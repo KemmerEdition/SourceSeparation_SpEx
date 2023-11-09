@@ -145,6 +145,8 @@ class BaseTrainer:
             "monitor_best": self.mnt_best,
             "config": self.config,
         }
+        if hasattr(self, "lr_scheduler"):
+            state.update({'lr_scheduler': self.lr_scheduler.state_dict()})
         filename = str(self.checkpoint_dir / "checkpoint-epoch{}.pth".format(epoch))
         if not (only_best and save_best):
             torch.save(state, filename)
@@ -185,6 +187,7 @@ class BaseTrainer:
             )
         else:
             self.optimizer.load_state_dict(checkpoint["optimizer"])
+            # self.lr_scheduler.load_state_dict(checkpoint["lr_scheduler"])
 
         self.logger.info(
             "Checkpoint loaded. Resume training from epoch {}".format(self.start_epoch)
