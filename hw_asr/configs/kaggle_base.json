@@ -1,0 +1,116 @@
+{
+  "name": "one_batch_test",
+  "n_gpu": 1,
+  "preprocessing": {
+    "sr": 16000,
+    "spectrogram": {
+      "type": "MelSpectrogram",
+      "args": {
+      }
+    },
+    "log_spec": true
+  },
+  "augmentations": {
+    "wave": [],
+    "spectrogram": []
+  },
+  "arch": {
+    "type": "SpexPlus",
+    "args": {
+    }
+  },
+  "data": {
+    "train": {
+      "batch_size": 3,
+      "num_workers": 5,
+      "datasets": [
+        {
+          "type": "LibrispeechDataset",
+          "args": {
+            "part": "train-clean-100",
+"           limit": 3,
+            "mix": {
+              "nfiles": 10000,
+              "test": false
+            }
+
+          }
+        }
+      ]
+    },
+    "val": {
+      "batch_size": 3,
+      "num_workers": 5,
+      "datasets": [
+        {
+          "type": "LibrispeechDataset",
+          "args": {
+            "part": "test-clean",
+             "limit": 3,
+            "mix": {
+              "nfiles": 10000,
+              "test": true,
+              "snr_levels": [0]
+            }
+          }
+        }
+      ]
+    }
+  },
+  "optimizer": {
+    "type": "AdamW",
+    "args": {
+      "lr": 3e-4,
+      "weight_decay": 1e-5
+    }
+  },
+  "loss": {
+    "type": "SpexLoss",
+    "args": {}
+  },
+  "metrics": [
+    {
+      "type": "SiSdr",
+      "args": {
+        "name": "SiSdrMetric"
+      }
+    },
+    {
+      "type": "PesQ",
+      "args": {
+        "name": "PesQMetric",
+        "sample_rate": 16000,
+        "mode": "wb"
+      }
+    },
+     {
+      "type": "Accuracy",
+      "args": {
+        "name": "AccuracyMetric"
+      }
+    }
+  ],
+  "lr_scheduler": {
+    "type": "OneCycleLR",
+    "args": {
+      "steps_per_epoch": 100,
+      "epochs": 30,
+      "anneal_strategy": "cos",
+      "max_lr": 1e-2,
+      "pct_start": 0.2
+    }
+  },
+  "trainer": {
+    "epochs": 30,
+    "save_dir": "saved/",
+    "save_period": 5,
+    "verbosity": 2,
+    "monitor": "min val_loss",
+    "early_stop": 100,
+    "visualize": "wandb",
+    "wandb_project": "spex_project",
+    "wandb_run_name": "test_run_on_one_batch",
+    "len_epoch": 1,
+    "grad_norm_clip": 100
+  }
+}
