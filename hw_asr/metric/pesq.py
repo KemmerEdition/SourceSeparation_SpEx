@@ -12,6 +12,6 @@ class PesQ(BaseMetric):
 
     def __call__(self, short: Tensor, target: Tensor, **kwargs):
         metric_ = self.pesq.to(short.device)
-        metric_result_norm = 20 * short / short.norm(-1, keepdim=True)
-        metric_result = metric_(metric_result_norm, target).mean().item()
+        metric_result_norm = 20 * short / short.norm(dim=-1, keepdim=True)
+        metric_result = metric_(metric_result_norm, target).mean()
         return metric_result
