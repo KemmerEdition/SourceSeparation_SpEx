@@ -99,15 +99,15 @@ class TCNSpex(nn.Module):
                                        GlobalLNSpex(conv_channels),
                                        nn.Conv1d(conv_channels, in_channels, 1))
 
-    def forward(self, x, sp_emb):
-        if sp_emb is None:
-            return self.one_block(x) + x
+    def forward(self, mix, reference=None):
+        if reference is None:
+            return self.one_block(mix) + mix
         else:
-            proj = x.shape[-1]
-            sp_ = torch.unsqueeze(sp_emb, -1)
-            sp_ = sp_.repeat(1, 1, proj)
-            out = torch.concat([x, sp_], 1)
-            return self.one_block(out) + x
+            proj = mix.shape[-1]
+            # sp_ = torch.unsqueeze(reference, -1)
+            reference = reference.repeat(1, 1, proj)
+            out = torch.concat([mix, reference], 1)
+            return self.one_block(out) + mix
 
 
 class TCNBlocksSpex(nn.Module):

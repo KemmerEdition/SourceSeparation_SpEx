@@ -35,18 +35,18 @@ class SpexPlus(nn.Module):
         self.decoder_1d = SpexDecoder(short_size, middle_size, long_size, speech_encoder_out_channels)
         self.linear = nn.Linear(speaker_encoder_hidden_channels, speakers_counter)
 
-    def forward(self, x, sp_emb, emb_len, **kwargs):
-        length = x.shape[-1]
+    def forward(self, mix, reference, reference_length, **kwargs):
+        length = mix.shape[-1]
         mix_mask_list = []
-        mix_encoded = self.encode_1d(x)
-        encoded = torch.cat(self.encode_1d(x), 1)
+        mix_encoded = self.encode_1d(mix)
+        encoded = torch.cat(self.encode_1d(mix), 1)
         x = self.LN(encoded)
         x = self.conv(x)
-        new_length = (emb_len - self.short_size) // (self.short_size // 2) + 1
+        new_length = (reference_length - self.short_size) // (self.short_size // 2) + 1
         new_length = ((new_length // 3) // 3) // 3
         new_length = new_length.float()
-        sp_emb_encoded = torch.cat(self.encode_1d(sp_emb), 1)
-        sp_emb = self.part_res(sp_emb_encoded).sum(-1, keepdeep=True) / new_length[:, None, None]
+        sp_emb_encoded = torch.cat(self.encode_1d(reference), 1)
+        sp_emb = self.part_res(sp_emb_encoded).sum(-1, keepdim=True) / new_length[:, None, None]
         for tcn in self.part_tcn:
             x = tcn(x, sp_emb)
         for i, v in zip(self.post_tcn, mix_encoded):

@@ -10,7 +10,7 @@ class SpexLoss(nn.Module):
         self.param_c = param_c
         self.cross_entropy = nn.CrossEntropyLoss()
 
-    def forward(self, short, middle, long, speaker_pred, speaker_id, target, **kwargs):
+    def forward(self, is_train, short, middle, long, speaker_pred, speaker_id, target, **kwargs):
 
         short = short - short.mean(dim=-1, keepdim=True)
         middle = middle - middle.mean(dim=-1, keepdim=True)
@@ -23,4 +23,6 @@ class SpexLoss(nn.Module):
 
         compute_cross_entropy = self.cross_entropy(speaker_pred, speaker_id.to(speaker_pred.device))
         loss_result = compute_loss + compute_cross_entropy * self.param_a
+        if not is_train:
+            return compute_loss
         return loss_result

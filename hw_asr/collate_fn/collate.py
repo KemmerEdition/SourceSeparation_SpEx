@@ -21,17 +21,20 @@ def collate_fn(dataset_items: List[dict]):
         result_batch['target'].append(i['target'].squeeze(0))
         result_batch['mix'].append(i['mix'].squeeze(0))
         result_batch['speaker_id'].append(i['speaker_id'])
+        result_batch['path'].append(i['path'])
 
     for v in result_batch:
         if v == 'reference':
             result_batch[v] = pad_sequence(result_batch[v], batch_first=True).unsqueeze(1)
         elif v == 'reference_length':
-            result_batch[v] = torch.Tensor(result_batch[v].long())
+            result_batch[v] = torch.LongTensor(result_batch[v])
         elif v == 'target':
             result_batch[v] = pad_sequence(result_batch[v], batch_first=True).unsqueeze(1)
         elif v == 'mix':
             result_batch[v] = pad_sequence(result_batch[v], batch_first=True).unsqueeze(1)
         elif v == 'speaker_id':
-            result_batch[v] = torch.Tensor(result_batch[v].long())
+            result_batch[v] = torch.LongTensor(result_batch[v])
+        elif v == 'path':
+            result_batch[v] = result_batch[v]
 
     return result_batch

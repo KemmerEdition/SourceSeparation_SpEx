@@ -28,10 +28,9 @@
           "type": "LibrispeechDataset",
           "args": {
             "part": "train-clean-100",
-"           limit": 3,
             "mix": {
-              "nfiles": 10000,
-              "test": false
+              "index_path": "/kaggle/input/librispeech-mixed/train-clean-100_index.json",
+              "out_folder": "/kaggle/input/librispeech-mixed/train-clean-100-mixed/train-clean-100-mixed"
             }
 
           }
@@ -39,18 +38,16 @@
       ]
     },
     "val": {
-      "batch_size": 3,
+      "batch_size": 1,
       "num_workers": 5,
       "datasets": [
         {
           "type": "LibrispeechDataset",
           "args": {
             "part": "test-clean",
-             "limit": 3,
             "mix": {
-              "nfiles": 10000,
-              "test": true,
-              "snr_levels": [0]
+               "index_path": "/kaggle/input/librispeech-mixed/test-clean_index.json",
+               "out_folder": "/kaggle/input/librispeech-mixed/test-clean-mixed/test-clean-mixed"
             }
           }
         }
@@ -93,15 +90,15 @@
   "lr_scheduler": {
     "type": "OneCycleLR",
     "args": {
-      "steps_per_epoch": 100,
-      "epochs": 30,
+      "steps_per_epoch": 5,
+      "epochs": 100,
       "anneal_strategy": "cos",
-      "max_lr": 1e-2,
+      "max_lr": 1e-3,
       "pct_start": 0.2
     }
   },
   "trainer": {
-    "epochs": 30,
+    "epochs": 100,
     "save_dir": "saved/",
     "save_period": 5,
     "verbosity": 2,
@@ -110,7 +107,7 @@
     "visualize": "wandb",
     "wandb_project": "spex_project",
     "wandb_run_name": "test_run_on_one_batch",
-    "len_epoch": 1,
+    "len_epoch": 1000,
     "grad_norm_clip": 100
   }
 }
