@@ -66,13 +66,16 @@ class LibrispeechDataset(BaseDataset):
     def _create_index(self, part, mix):
         index = []
 
-        split_dir = self._data_dir / part
-        if not split_dir.exists():
-            self._load_part(part)
+        # split_dir = self._data_dir / part
+        # if not split_dir.exists():
+        #     self._load_part(part)
 
         out_folder = mix.get("out_folder", self._data_dir / f"{part}-mixed")
         out_folder = Path(out_folder)
         if not out_folder.exists():
+            split_dir = self._data_dir / part
+            if not split_dir.exists():
+                self._load_part(part)
             self.mix_trainer(split_dir, out_folder, mix)
 
         ref_train = sorted(glob(os.path.join(out_folder, '*-ref.wav')))

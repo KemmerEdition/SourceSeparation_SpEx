@@ -29,7 +29,7 @@
           "args": {
             "part": "train-clean-100",
             "mix": {
-              "index_path": "/kaggle/input/librispeech-mixed/train-clean-100_index.json",
+
               "out_folder": "/kaggle/input/librispeech-mixed/train-clean-100-mixed/train-clean-100-mixed"
             }
 
@@ -46,7 +46,7 @@
           "args": {
             "part": "test-clean",
             "mix": {
-               "index_path": "/kaggle/input/librispeech-mixed/test-clean_index.json",
+
                "out_folder": "/kaggle/input/librispeech-mixed/test-clean-mixed/test-clean-mixed"
             }
           }
@@ -107,7 +107,7 @@
     "visualize": "wandb",
     "wandb_project": "spex_project",
     "wandb_run_name": "test_run_on_one_batch",
-    "len_epoch": 1000,
+    "len_epoch": 500,
     "grad_norm_clip": 100
   }
 }
