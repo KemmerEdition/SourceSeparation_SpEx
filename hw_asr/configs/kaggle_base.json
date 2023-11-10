@@ -91,7 +91,7 @@
     "type": "OneCycleLR",
     "args": {
       "steps_per_epoch": 5,
-      "epochs": 99,
+      "epochs": 101,
       "anneal_strategy": "cos",
       "max_lr": 1e-3,
       "pct_start": 0.2
