@@ -90,15 +90,15 @@
   "lr_scheduler": {
     "type": "OneCycleLR",
     "args": {
-      "steps_per_epoch": 5,
-      "epochs": 201,
+      "steps_per_epoch": 500,
+      "epochs": 51,
       "anneal_strategy": "cos",
       "max_lr": 1e-3,
-      "pct_start": 0.2
+      "pct_start": 0.1
     }
   },
   "trainer": {
-    "epochs": 100,
+    "epochs": 50,
     "save_dir": "saved/",
     "save_period": 5,
     "verbosity": 2,
@@ -106,7 +106,7 @@
     "early_stop": 100,
     "visualize": "wandb",
     "wandb_project": "spex_project",
-    "len_epoch": 1000,
+    "len_epoch": 500,
     "grad_norm_clip": 100
   }
 }
