@@ -106,8 +106,7 @@
     "early_stop": 100,
     "visualize": "wandb",
     "wandb_project": "spex_project",
-    "wandb_run_name": "test_run_on_one_batch",
-    "len_epoch": 500,
+    "len_epoch": 1000,
     "grad_norm_clip": 100
   }
 }
