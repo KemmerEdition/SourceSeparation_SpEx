@@ -17,6 +17,7 @@
   "arch": {
     "type": "SpexPlus",
     "args": {
+      "speakers_counter": 100
     }
   },
   "data": {
@@ -57,7 +58,7 @@
   "optimizer": {
     "type": "AdamW",
     "args": {
-      "lr": 3e-4,
+      "lr": 1e-4,
       "weight_decay": 1e-5
     }
   },
@@ -90,7 +91,7 @@
   "lr_scheduler": {
     "type": "OneCycleLR",
     "args": {
-      "steps_per_epoch": 2,
+      "steps_per_epoch": 10,
       "epochs": 11,
       "anneal_strategy": "cos",
       "max_lr": 1e-3,
@@ -98,7 +99,7 @@
     }
   },
   "trainer": {
-    "epochs": 100,
+    "epochs": 10,
     "save_dir": "saved/",
     "save_period": 5,
     "verbosity": 2,

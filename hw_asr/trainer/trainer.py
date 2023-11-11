@@ -245,7 +245,7 @@ class Trainer(BaseTrainer):
             rows[ph] = {
                 "reference": load_from_wandb(ref),
                 "mix": load_from_wandb(m),
-                "short": load_from_wandb(self.audio_norm(sh)),
+                "short": load_from_wandb(self.audio_norm(sh, loud=20)),
                 "target": load_from_wandb(tar)
             }
 

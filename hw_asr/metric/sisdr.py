@@ -1,7 +1,7 @@
 # from typing import List
 #
-# import torch
-# from torch import Tensor
+import torch
+from torch import Tensor
 
 from hw_asr.base.base_metric import BaseMetric
 from torchmetrics.audio import ScaleInvariantSignalDistortionRatio
@@ -13,7 +13,7 @@ class SiSdr(BaseMetric):
 
         self.sisdr = ScaleInvariantSignalDistortionRatio()
 
-    def __call__(self, short, target, **kwargs):
+    def __call__(self, short: Tensor, target: Tensor, **kwargs):
         metric_result = self.sisdr.to(short.device)
         metric_result = metric_result(short, target)
-        return metric_result
+        return metric_result.item()
