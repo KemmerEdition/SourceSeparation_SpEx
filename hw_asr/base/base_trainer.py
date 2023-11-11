@@ -21,7 +21,7 @@ class BaseTrainer:
         self.criterion = criterion
         self.metrics = metrics
         self.optimizer = optimizer
-        self.use_old_params = use_old_params
+        self.use_old_params = config.use_old_params
 
         # for interrupt saving
         self._last_epoch = 0
