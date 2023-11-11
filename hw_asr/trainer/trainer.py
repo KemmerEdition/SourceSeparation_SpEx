@@ -56,6 +56,46 @@ class Trainer(BaseTrainer):
             "loss", *[m.name for m in self.metrics], writer=self.writer
         )
 
+        if config.resume is not None:
+            self._resume_checkpoint(config.resume)
+
+    def _resume_checkpoint(self, resume_path):
+        """
+        Resume from saved checkpoints
+
+        :param resume_path: Checkpoint path to be resumed
+        """
+        resume_path = str(resume_path)
+        self.logger.info("Loading checkpoint: {} ...".format(resume_path))
+        checkpoint = torch.load(resume_path, self.device)
+        self.start_epoch = checkpoint["epoch"] + 1
+        self.mnt_best = checkpoint["monitor_best"]
+
+        # load architecture params from checkpoint.
+        if checkpoint["config"]["arch"] != self.config["arch"]:
+            self.logger.warning(
+                "Warning: Architecture configuration given in config file is different from that "
+                "of checkpoint. This may yield an exception while state_dict is being loaded."
+            )
+        self.model.load_state_dict(checkpoint["state_dict"])
+
+        # load optimizer state from checkpoint only when optimizer type is not changed.
+        if (
+                checkpoint["config"]["optimizer"] != self.config["optimizer"] or
+                checkpoint["config"]["lr_scheduler"] != self.config["lr_scheduler"]
+        ):
+            self.logger.warning(
+                "Warning: Optimizer or lr_scheduler given in config file is different "
+                "from that of checkpoint. Optimizer parameters not being resumed."
+            )
+        else:
+            self.optimizer.load_state_dict(checkpoint["optimizer"])
+            self.lr_scheduler.load_state_dict(checkpoint["lr_scheduler"])
+
+        self.logger.info(
+            "Checkpoint loaded. Resume training from epoch {}".format(self.start_epoch)
+        )
+
     @staticmethod
     def move_batch_to_device(batch, device: torch.device):
         """
@@ -147,9 +187,9 @@ class Trainer(BaseTrainer):
         audio = random.choice(audio_batch.cpu())
         self.writer.add_audio("audio", audio, sample_rate=16000)
 
-    def audio_norm(self, audio, loud=20):
-        normal_audio = loud * audio / audio.norm(-1, keepdim=True)
-        return normal_audio
+    # def audio_norm(self, audio, loud=20):
+    #     normal_audio = loud * audio / audio.norm(-1, keepdim=True)
+    #     return normal_audio
 
     def process_batch(self, batch, batch_idx, is_train: bool, metrics: MetricTracker):
         batch = self.move_batch_to_device(batch, self.device)
@@ -245,8 +285,12 @@ class Trainer(BaseTrainer):
             rows[ph] = {
                 "reference": load_from_wandb(ref),
                 "mix": load_from_wandb(m),
-                "short": load_from_wandb(self.audio_norm(sh, loud=20)),
+                "short": load_from_wandb(audio_norm(sh, loud=20)),
                 "target": load_from_wandb(tar)
             }
 
         self.writer.add_table("predictions", pd.DataFrame.from_dict(rows, orient="index"))
+
+def audio_norm(audio, loud=20):
+    normal_audio = loud * audio / audio.norm(-1, keepdim=True)
+    return normal_audio
