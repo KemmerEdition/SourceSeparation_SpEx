@@ -1,0 +1,112 @@
+{
+  "name": "train_bs3_30k",
+  "n_gpu": 1,
+  "preprocessing": {
+    "sr": 16000,
+    "spectrogram": {
+      "type": "MelSpectrogram",
+      "args": {
+      }
+    },
+    "log_spec": true
+  },
+  "augmentations": {
+    "wave": [],
+    "spectrogram": []
+  },
+  "arch": {
+    "type": "SpexPlus",
+    "args": {
+    }
+  },
+  "data": {
+    "train": {
+      "batch_size": 3,
+      "num_workers": 5,
+      "datasets": [
+        {
+          "type": "LibrispeechDataset",
+          "args": {
+            "part": "train-clean-100",
+            "mix": {
+
+              "out_folder": "/kaggle/input/librispeech-mixed/train-clean-100-mixed/train-clean-100-mixed"
+            }
+
+          }
+        }
+      ]
+    },
+    "val": {
+      "batch_size": 3,
+      "num_workers": 5,
+      "datasets": [
+        {
+          "type": "LibrispeechDataset",
+          "args": {
+            "part": "test-clean",
+            "mix": {
+
+               "out_folder": "/kaggle/input/librispeech-mixed/test-clean-mixed/test-clean-mixed"
+            }
+          }
+        }
+      ]
+    }
+  },
+  "optimizer": {
+    "type": "AdamW",
+    "args": {
+      "lr": 1e-3,
+      "weight_decay": 1e-5
+    }
+  },
+  "loss": {
+    "type": "SpexLoss",
+    "args": {}
+  },
+  "metrics": [
+    {
+      "type": "SiSdr",
+      "args": {
+        "name": "SiSdrMetric"
+      }
+    },
+    {
+      "type": "PesQ",
+      "args": {
+        "name": "PesQMetric",
+        "sample_rate": 16000,
+        "mode": "wb"
+      }
+    },
+     {
+      "type": "Accuracy",
+      "args": {
+        "name": "AccuracyMetric"
+      }
+    }
+  ],
+  "lr_scheduler": {
+    "type": "OneCycleLR",
+    "args": {
+      "steps_per_epoch": 6000,
+      "epochs": 8,
+      "anneal_strategy": "cos",
+      "max_lr": 1e-3,
+      "pct_start": 0.2
+    }
+  },
+  "trainer": {
+    "epochs": 7,
+    "save_dir": "saved/",
+    "save_period": 5,
+    "verbosity": 2,
+    "monitor": "min val_loss",
+    "early_stop": 100,
+    "visualize": "wandb",
+    "wandb_project": "spex_project",
+    "len_epoch": 6000,
+    "grad_norm_clip": 100
+  }
+}
