@@ -15,76 +15,52 @@
     "spectrogram": []
   },
   "arch": {
-    "type": "BaselineModel",
+    "type": "SpexPlus",
     "args": {
-      "n_feats": 128,
-      "fc_hidden": 512
+
     }
   },
   "data": {
     "train": {
-      "batch_size": 50,
+      "batch_size": 3,
       "num_workers": 5,
       "datasets": [
         {
           "type": "LibrispeechDataset",
           "args": {
             "part": "train-clean-100",
-            "max_audio_length": 20.0,
-            "max_text_length": 200
-          },
-          "module": "hw_asr.models"
-        },
-        {
-          "type": "LibrispeechDataset",
-          "args": {
-            "part": "train-clean-360",
-            "max_audio_length": 20.0,
-            "max_text_length": 200
-          }
-        },
-        {
-          "type": "LibrispeechDataset",
-          "args": {
-            "part": "train-other-500",
-            "max_audio_length": 20.0,
-            "max_text_length": 200
+            "mix": {
+            }
           }
         }
       ]
     },
     "val": {
-      "batch_size": 30,
+      "batch_size": 3,
       "num_workers": 5,
       "datasets": [
         {
           "type": "LibrispeechDataset",
           "args": {
-            "part": "dev-clean"
+            "part": "dev-clean",
+            "mix": {
+
+            }
           }
         }
       ]
     },
-    "test-other": {
-      "batch_size": 30,
-      "num_workers": 5,
-      "datasets": [
-        {
-          "type": "LibrispeechDataset",
-          "args": {
-            "part": "test-other"
-          }
-        }
-      ]
-    },
+
     "test-clean": {
-      "batch_size": 30,
+      "batch_size": 3,
       "num_workers": 5,
       "datasets": [
         {
           "type": "LibrispeechDataset",
           "args": {
-            "part": "test-clean"
+            "part": "test-clean",
+            "mix": {
+            }
           }
         }
       ]
