@@ -33,7 +33,7 @@ class SpexPlus(nn.Module):
         self.post_tcn = nn.ModuleList(post_tcn)
 
         self.decoder_1d = SpexDecoder(short_size, middle_size, long_size, speech_encoder_out_channels)
-        self.linear = nn.Linear(speaker_encoder_hidden_channels, speakers_counter)
+        self.linear = nn.Linear(speaker_encoder_hidden_channels, 100)
 
     def forward(self, mix, reference, reference_length, **kwargs):
         length = mix.shape[-1]

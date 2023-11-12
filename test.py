@@ -5,8 +5,9 @@ from pathlib import Path
 
 import torch
 from tqdm import tqdm
-
+import hw_asr.metric as module_metric
 import hw_asr.model as module_model
+from hw_asr.utils import MetricTracker
 from hw_asr.trainer import Trainer
 from hw_asr.utils import ROOT_PATH
 from hw_asr.utils.object_loading import get_dataloaders
@@ -22,13 +23,13 @@ def main(config, out_file):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # text_encoder
-    text_encoder = config.get_text_encoder()
+    # text_encoder = config.get_text_encoder()
 
     # setup data_loader instances
-    dataloaders = get_dataloaders(config, text_encoder)
+    dataloaders = get_dataloaders(config)
 
     # build model architecture
-    model = config.init_obj(config["arch"], module_model, n_class=len(text_encoder))
+    model = config.init_obj(config["arch"], module_model)
     logger.info(model)
 
     logger.info("Loading checkpoint: {} ...".format(config.resume))
@@ -42,34 +43,19 @@ def main(config, out_file):
     model = model.to(device)
     model.eval()
 
-    results = []
+    metrics = [config.init_obj(metric_dict, module_metric) for metric_dict in config["metrics"]]
+    evaluation_metrics = MetricTracker(*[m.name for m in metrics])
 
     with torch.no_grad():
         for batch_num, batch in enumerate(tqdm(dataloaders["test"])):
             batch = Trainer.move_batch_to_device(batch, device)
             output = model(**batch)
-            if type(output) is dict:
-                batch.update(output)
-            else:
-                batch["logits"] = output
-            batch["log_probs"] = torch.log_softmax(batch["logits"], dim=-1)
-            batch["log_probs_length"] = model.transform_input_lengths(
-                batch["spectrogram_length"]
-            )
-            batch["probs"] = batch["log_probs"].exp().cpu()
-            batch["argmax"] = batch["probs"].argmax(-1)
-            for i in range(len(batch["text"])):
-                argmax = batch["argmax"][i]
-                argmax = argmax[: int(batch["log_probs_length"][i])]
-                results.append(
-                    {
-                        "ground_trurh": batch["text"][i],
-                        "pred_text_argmax": text_encoder.ctc_decode(argmax.cpu().numpy()),
-                        "pred_text_beam_search": text_encoder.ctc_beam_search(
-                            batch["probs"][i], batch["log_probs_length"][i], beam_size=100
-                        )[:10],
-                    }
-                )
+    
+            batch.update(output)
+            for met in metrics:
+                evaluation_metrics.update(met.name, met(**batch))
+ 
+    results = evaluation_metrics.result()
     with Path(out_file).open("w") as f:
         json.dump(results, f, indent=2)
 
@@ -155,10 +141,9 @@ if __name__ == "__main__":
                     {
                         "type": "CustomDirAudioDataset",
                         "args": {
-                            "audio_dir": str(test_data_folder / "audio"),
-                            "transcription_dir": str(
-                                test_data_folder / "transcriptions"
-                            ),
+                            "mix_dir": str(test_data_folder / "mix"),
+                            "ref_dir": str(test_data_folder / "refs"),
+                            "target_dir": str(test_data_folder / "targets"),
                         },
                     }
                 ],
