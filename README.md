@@ -1,82 +1,56 @@
-# ASR project barebones
+# Source Separation (SPEX+) project
 
 ## Installation guide
 
-< Write your installation guide here >
-
+### Part 1. Create (or download) a dataset for this work.
+In my report I described the process of generating and some difficulties. If you do not want to generate mixes by yourself download zip from here:
+#### Train-clean-100-mixed part:
 ```shell
-pip install -r ./requirements.txt
-```
-
-## Recommended implementation order
-
-You might be a little intimidated by the number of folders and classes. Try to follow this steps to gradually undestand
-the workflow.
-
-1) Test `hw_asr/tests/test_dataset.py`  and `hw_asr/tests/test_config.py` and make sure everythin works for you
-2) Implement missing functions to fix tests in  `hw_asr\tests\test_text_encoder.py`
-3) Implement missing functions to fix tests in  `hw_asr\tests\test_dataloader.py`
-4) Implement functions in `hw_asr\metric\utils.py`
-5) Implement missing function to run `train.py` with a baseline model
-6) Write your own model and try to overfit it on a single batch
-7) Implement ctc beam search and add metrics to calculate WER and CER over hypothesis obtained from beam search.
-8) ~~Pain and suffering~~ Implement your own models and train them. You've mastered this template when you can tune your
-   experimental setup just by tuning `configs.json` file and running `train.py`
-9) Don't forget to write a report about your work
-10) Get hired by Google the next day
-
-## Before submitting
-
-0) Make sure your projects run on a new machine after complemeting the installation guide or by 
-   running it in docker container.
-1) Search project for `# TODO: your code here` and implement missing functionality
-2) Make sure all tests work without errors
-   ```shell
-   python -m unittest discover hw_asr/tests
+https://drive.google.com/file/d/11wfHRkvOQqIfmOpnQB8stwpeRgtJbJyX/view
    ```
-3) Make sure `test.py` works fine and works as expected. You should create files `default_test_config.json` and your
-   installation guide should download your model checpoint and configs in `default_test_model/checkpoint.pth`
-   and `default_test_model/config.json`.
+#### Test-clean-mixed part for validation respectively:
+```shell
+https://drive.google.com/file/d/1LIPaY_pxXzHRDiyzpQvkt7a2N_IQSz8X/view
+   ```
+#### If you use Kaggle GPU for learning - cry and use my public dataset there:
+```shell
+https://www.kaggle.com/datasets/anastasiakemmer/librispeech-mixed
+   ```
+### Part 2 (If you are still alive).
+#### Clone repository
    ```shell
-   python test.py \
-      -c default_test_config.json \
-      -r default_test_model/checkpoint.pth \
-      -t test_data \
+   git clone https://github.com/KemmerEdition/HW-2-SS.git
+   ```
+#### Maybe then you need to change directory (for example if you use kaggle)
+
+   ```shell
+   cd /kaggle/working/HW-2-SS
+   ```
+#### Download requirements and checkpoint of my model
+   ```shell
+   pip install -r requirements.txt
+   pip install pesq
+   ```
+   ```shell
+   !conda install -y gdown
+   !gdown --id 1AbdteSPpitDptIksoQQtQbuaytXNJNpy
+   ```
+## Train
+   ```shell
+   python -m train \
+      -c hw_asr/configs/train_bs3_30k.json
+   ```
+## Test
+#### For using this code you need to upload test_data directory in workspace, like it'd done here (directory should contain mix, refs, targets folders)
+   ```shell
+   python -m test \
+      -c hw_asr/tests/config.json \
+      -r checkpoint-epoch5.pth \
+      -t test_data_2 \
       -o test_result.json
    ```
-4) Use `train.py` for training
 
 ## Credits
 
 This repository is based on a heavily modified fork
 of [pytorch-template](https://github.com/victoresque/pytorch-template) repository.
-
-## Docker
-
-You can use this project with docker. Quick start:
-
-```bash 
-docker build -t my_hw_asr_image . 
-docker run \
-   --gpus '"device=0"' \
-   -it --rm \
-   -v /path/to/local/storage/dir:/repos/asr_project_template/data/datasets \
-   -e WANDB_API_KEY=<your_wandb_api_key> \
-	my_hw_asr_image python -m unittest 
-```
-
-Notes:
-
-* `-v /out/of/container/path:/inside/container/path` -- bind mount a path, so you wouldn't have to download datasets at
-  the start of every docker run.
-* `-e WANDB_API_KEY=<your_wandb_api_key>` -- set envvar for wandb (if you want to use it). You can find your API key
-  here: https://wandb.ai/authorize
-
-## TODO
-
-These barebones can use more tests. We highly encourage students to create pull requests to add more tests / new
-functionality. Current demands:
-
-* Tests for beam search
-* README section to describe folders
-* Notebook to show how to work with `ConfigParser` and `config_parser.init_obj(...)`
