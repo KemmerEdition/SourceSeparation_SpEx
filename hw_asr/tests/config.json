@@ -42,6 +42,14 @@
       "args": {
         "name": "SiSdrMetric"
       }
+    },
+    {
+      "type": "PesQ",
+      "args": {
+        "name": "PesQMetric",
+        "sample_rate": 16000,
+        "mode": "wb"
+      }
     }
   ],
   "lr_scheduler": {
